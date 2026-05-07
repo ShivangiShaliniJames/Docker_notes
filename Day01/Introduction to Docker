@@ -1,0 +1,105 @@
+1. Introduction to Docker
+
+Interview:
+Docker is a containerization platform that uses a client-server architecture where the Docker daemon manages images and containers, allowing applications to run consistently
+across different environments.
+
+Introduction to Docker
+
+Docker is an open-source platform that allows you to package applications and their dependencies into lightweight containers so they can run consistently across any environment.
+
+In simple terms:
+
+Docker ensures your application runs the same on your laptop, server, or cloud.
+
+Docker Vs Virtual Machine
+
+The fundamental difference is how they isolate software: Virtual Machines (VMs) virtualize the hardware, while Docker virtualizes the Operating System (OS). 
+A VM includes a full copy of an OS, which makes it heavy and slow to start. Docker containers share the host's OS kernel, making them lightweight and able to start in seconds.
+
+Core Differences
+Isolation Level:  VMs: Highly secure with hard boundaries; each has its own kernel. Docker: Process-level isolation; containers share the host kernel.
+
+Resource Usage:  VMs: Heavy; requires GBs of space and pre-allocated RAM.  Docker: Light; images are typically MBs and use RAM on-demand.
+
+Boot Speed:  VMs: Minutes (must boot a full OS).  Docker: Milliseconds to seconds (app starts like a standard process).
+
+Guest OS Support:  VMs: Can run any OS (e.g., Windows on Mac, Linux on Windows).Docker: Limited to the host's kernel type (mostly Linux-based).
+
+2. Docker Architecture:
+
+Docker follows a client-server architecture:
+
+🔹 1. Docker Client
+You interact using commands (docker run, docker build)
+Sends requests to Docker daemon
+
+🔹 2. Docker Daemon (dockerd)
+Core engine that runs on host machine
+Builds, runs, and manages containers
+
+🔹 3. Docker Images
+Read-only templates used to create containers
+Example: Ubuntu, Python images
+
+🔹 4. Docker Containers
+Running instances of images
+Lightweight and isolated environments
+
+🔹 5. Docker Registry
+Stores images (public/private)
+Example: Docker Hub
+
+How Docker Works
+Docker Client → Docker Daemon → Images → Containers → Registry
+
+
+3. Installing Docker (Linux / Ubuntu)
+
+Step 1: Update system
+sudo apt update
+
+Step 2: Install prerequisites
+sudo apt install ca-certificates curl gnupg
+
+Step 3: Add Docker GPG key
+sudo install -m 0755 -d /etc/apt/keyrings
+
+Step 4: Install Docker
+sudo apt install docker.io
+
+Step 5: Start Docker
+sudo systemctl start docker
+sudo systemctl enable docker
+
+Step 6: Verify installation
+docker --version
+
+First Test Command
+docker run hello-world
+
+If successful, Docker is working correctly 🎉
+
+4. Installing docker on local terminal
+
+macOS
+Download: Choose the Intel or Apple Silicon version based on your Mac's chip.
+Install: Open the .dmg file and drag Docker to your Applications folder.
+Launch: Open Docker from your Applications to start the engine.
+Verify: Open Terminal and type:docker --version
+
+
+Commands:
+ubuntu@ip-172-31-87-248:~$ sudo systemctl status docker    #This command shows the docker architecture - (dockerd running, contains containerd)Docker Application Container Engine
+ubuntu@ip-172-31-87-248:~$ docker                          #shows all docker commands
+ubuntu@ip-172-31-87-248:~$ docker ps                        # does not give permission to see as ubuntu is not permitted
+ubuntu@ip-172-31-87-248:~$ whoami
+ubuntu
+ubuntu@ip-172-31-87-248:~$ sudo usermod -aG docker $USER    #command is used to add us/current user/ubuntu into user mode of docker to access docker
+ubuntu@ip-172-31-87-248:~$ docker ps
+ubuntu@ip-172-31-87-248:~$                                   # still permission is denied so refresh 
+ubuntu@ip-172-31-87-248:~$ newgrp docker
+ubuntu@ip-172-31-87-248:~$docker ps
+no error
+
+You can use the command docker ps directly on docker desktop
