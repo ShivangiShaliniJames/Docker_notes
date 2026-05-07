@@ -1,0 +1,106 @@
+Commands:
+
+ubuntu@ip-172-31-87-248:~$ mkdir projects
+ubuntu@ip-172-31-87-248:~$ cd projects
+ubuntu@ip-172-31-87-248:~/projects$ git clone https://github.com/LondheShubham153/simple-java-docker.git
+ubuntu@ip-172-31-87-248:~/projects$ cd simple-java-docker
+ubuntu@ip-172-31-87-248:~/projects/simple-java-docker$ ls
+DOCKERFILE README.md src
+ubuntu@ip-172-31-87-248:~/projects/simple-java-docker$rm -v DOCKERFILE      #shows DOCKERFILE getting deleted -v stands for verbose
+ubuntu@ip-172-31-87-248:~/projects/simple-java-docker$vim DOCKERFILE        #Dockerfile has some instructions which helps build image
+
+
+DOCKERFILE: Has some set of instructions which help run applications. It should have code for docker image, libraries which help 
+operate the application, should have information of the operating system to be used, should have information of framework/tools/repositories/libraries.
+
+DOCKERFILE for Java application
+
+# pull a base image which provides all required tools and libraries 
+FROM openjdk:17-jdk-alpine            #Google official Java runtime base image, 17 is tag, jdk-alpine is lightweight
+
+#create a folder where the app code will be stored
+WORKDIR /app                               # Destination
+
+#Copy the source code from host machine to your container
+COPY . .                                  # copy in current directory  
+#or COPY src/Main.java app/Main.java
+
+#Compile the application code
+RUN javac src/Main.java                   #java first compiles and then run the application 
+# or RUN Main.java
+
+#run the application code
+CMD ["java", "Main"]                    #ENTRYPOINT["java", "MAIN"]  Entrypoint does not make it overwritable
+
+ubuntu@ip-172-31-87-248:~/projects/simple-java-docker$docker build -t java-app .        #builds the image 
+ubuntu@ip-172-31-87-248:~/projects/simple-java-docker$docker images      # verify image
+ubuntu@ip-172-31-87-248:~/projects/simple-java-docker$docker run java-app      #runs the application prints date, make changes in the main 
+file - hello friends etc and then again build and run to see the updated changes
+
+Dockerfile for python application (flask-app-ecs)
+Check all the requirements.txt file, src file etc
+
+FROM python:3.7         #base image
+
+
+WORKDIR /app            #working directory, flask app runs on port 80
+
+
+COPY . .
+
+
+RUN pip install -r requirements.txt        #check how to install requirements of python application
+
+
+CMD ["python", "run.py"]                   #or ENTRYPOINT ["python"]
+                                           #CMD ["run.py"]
+
+Note:
+Flask app runs on port 80
+
+host port and container port
+
+Port mapping allows you to connect your local machine (Host) to the software running inside Docker (Container). 
+By default, containers are isolated; ports must be explicitly "opened" to access them from your browser or terminal.
+
+ubuntu@ip-172-31-87-248:~/projects/simple-java-docker$docker run -d -p 80:80 flask-app .
+ubuntu@ip-172-31-87-248:~/projects/simple-java-docker$docker logs <container_id>      #check container id from docker ps
+
+#Add inbound rule port 80 in security group for the ec2 instance on AWS to open the port to access 
+#Use the public ip to check the browser and use docker logs <container id> which show all activities on the browser
+
+ubuntu@ip-172-31-87-248:~/projects/simple-java-docker$ docker stop       #to start the docker
+ubuntu@ip-172-31-87-248:~/projects/simple-java-docker$ docker start      #to stop the docker
+
+Note: The browser should display "Server is up and running". (mentioned in app.py)
+
+ubuntu@ip-172-31-87-248:~/projects/simple-java-docker$ docker exec -it <container_id> bash      #it is interactive mode, itd -interactive in detach mode, put mysql container id
+bash-5.1#mysql -u root -p
+Enter password: root
+mysql> show databases      #running mysql inside docker container
+mysql> exit
+ctrl+C
+
+ubuntu@ip-172-31-87-248:~/projects/simple-java-docker$
+
+
+Similarly check node-todo-cicd repository for creating Dockerfile for node js application
+
+# Node Base Image
+FROM node:12.2.0-alpine
+
+#Working Directry
+WORKDIR /node
+
+#Copy the Code
+COPY . .
+
+#Install the dependecies
+RUN npm install
+RUN npm run test
+EXPOSE 8000
+
+#Run the code
+CMD ["node","app.js"]
+
+
