@@ -1,0 +1,45 @@
+Docker Images
+
+Images contain everything needed to run an application—code, libraries, and settings.
+Immutable: Once created, they do not change.
+Layers: Built in stacks to save space and time.
+Storage: Stored locally or on Docker Hub.
+
+Essential Image Commands
+List images: docker images
+Download an image: docker pull <image_name>
+Delete an image: docker rmi <image_id>
+Build from a Dockerfile: docker build -t <name> .
+
+Docker Containers
+Containers are the isolated environments where your code actually executes.
+
+Ephemeral: They can be stopped, started, and deleted easily.
+Isolated: They run independently from your host system.
+Writable: They add a "thin layer" on top of the image to store runtime data.
+
+Essential Container Commands
+Run a new container: docker run <image_name>
+List running containers: docker ps
+List all containers (including stopped): docker ps -a
+Stop a container: docker stop <container_id>
+Remove a container: docker rm <container_id>
+Enter a running container: docker exec -it <container_id> /bin/bash
+
+Commands:
+
+ubuntu@ip-172-31-87-248:~$ docker login
+Username:
+Password:
+Login successful                    #If you forgot docker password, generate PAT Personal access Token token on docker desktop and use the token instead of password
+ubuntu@ip-172-31-87-248:~$ docker pull hello-world            #pull already available image for hello world
+ubuntu@ip-172-31-87-248:~$ docker images                      # you can see the image
+ubuntu@ip-172-31-87-248:~$ docker run hello-world
+Hello from Docker                                             #this proves you have successfully installed hello-world
+
+ubuntu@ip-172-31-87-248:~$ docker pull mysql                  # will pull pre-built image of mysql
+ubuntu@ip-172-31-87-248:~$ docker run -e MYSQL_ROOT_PASSWORD=root mysql      # this will start mysql container as mysql is a server, should run in background so use following command
+ubuntu@ip-172-31-87-248:~$ docker run -d -e MYSQL_ROOT_PASSWORD=root mysql                           #run in detached mode without disrupting terminal window
+
+ubuntu@ip-172-31-87-248:~$docker stop <container_id>        # container id can be viewed from docker ps
+
