@@ -72,16 +72,21 @@ ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker network inspect two_
 
 Now add 5000 port in security group for the ec2 instance to check the application running
 
-ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker exec -itd bash     #to check what is going on in mysql container
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker exec -it <container_id> bash     #to check what is going on in mysql container
 bash-5.1#mysql -u root -p
 Enter password: root
 
 mysql>use devops;
 mysql>select * from messages;            #this will show all the data entered in the browser 
 
+Now if someone or we by mistake stop and remove the mysql database container and 
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker stop <container_id_for_mysql> && docker rm <container_id_for_mysql>
+Then try again the restart it, 
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker restart <container_id>
 
-
-
+And again refresh the browser, we see all the data gone. Hence we now explore the docker volume storage which basically binds the 
+mysql (or any database) data with the host file system so that even if mysql or any database container is deleted/removed, the data
+does not get lost.
 
 
 
