@@ -25,12 +25,35 @@ docker run -d --name my_app -v my_data:/app/data nginx
 my_data: The volume name.
 /app/data: The path inside the container.
 
-ubuntu@ip-172-31-87-248:~$docker volume ls    #shows all existing volume list
-ubuntu@ip-172-31-87-248:~$docker volume create mysql-data
-ubuntu@ip-172-31-87-248:~$docker inspect mysql-data      #to check the created volume
+Commands:
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker volume ls    #shows all existing volume list
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker volume create mysql-data
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker inspect mysql-data      #to check the created volume
 
 Now to bind our db container with mysql-data
 ubuntu@ip-172-31-87-248:~$docker ps   
 
 Stop and remove the mysql container
-ubuntu@ip-172-31-87-248:~$docker volume create mysql-data
+
+Now attach the newly created mysql-data volume with the mysql container in docker run command
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker run -d --name mysql --network two-tier -v mysql-data:/var/lib/mysql -e 
+MY_SQL_ROOT_PASSWORD=root MY_SQL_DATABASE=devops mysql
+
+Now restart the flask-app
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker restart <container_id_for_two-tier-flask-app>
+
+Enter some data in the browser
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker volume inspect mysql-data          #you will get the /var/lib/mysql in the Mountpoint section
+Now you will see even when you stop and remove mysql container_id, still data will persist
+
+Go inside the container:
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$sudo su
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$cd /var/lib/docker/volumes/mysql-data/_data      
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app/var/lib/docker/volumes/mysql-data/_data$ls      #you will be able to see all the entered text in the browser
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app/var/lib/docker/volumes/mysql-data/_data$cd ..
+/var/lib/docker/volumes/mysql-data/_data$docker restart <container_id_for mysql>
+
+You can create a directory also and mount all the data with -v in the docker run command
+
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker run -d --name mysql --network two-tier -v mysql-data:/var/lib/mysql -e 
+MY_SQL_ROOT_PASSWORD=root MY_SQL_DATABASE=devops mysql
