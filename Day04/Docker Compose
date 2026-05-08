@@ -1,0 +1,93 @@
+Docker Compose is a tool for defining and running multi-container applications. You use a single YAML file to configure your application’s 
+services, networks, and volumes.
+
+Key Benefits
+One-command startup: Launch your entire stack with docker compose up.
+Environment isolation: Create distinct environments (dev, test, staging) on a single host.
+Preserved data: Volumes are automatically reused when containers are restarted.
+Service communication: Services can talk to each other using their service names as hostnames.
+
+Basic docker-compose.yml Structure
+
+services:
+  web:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+  database:
+    image: postgres:15
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
+
+Essential Commands 🚀
+Start: docker compose up -d (runs in background)
+Stop/Remove: docker compose down (stops containers and removes networks)
+View Logs: docker compose logs -f
+Check Status: docker compose ps
+Rebuild: docker compose build (useful after changing a Dockerfile)
+
+Compose vs. Standard Docker CLI
+Standard: You must manually link networks and volumes for every docker run.
+Compose: All relationships (links, volumes, ports) are defined in code and version-controlled.
+
+Check the docker-compose file for two-tier-flask-app - check screenshots
+To install docker-compose
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$sudo apt-get install docker-compose-v2
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker compose up      #to build and run the image/containers - automation 
+
+The problem now is that the db container does not get built first and hence is causing problem. So we use depends on and
+health check features in the docker compose file.
+
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker compose up -d     #to keep running the containers in detach mode
+
+version: "3.8"
+
+services:
+  mysql:
+    user: "${UID}:${GID}" 
+    image: mysql:5.7
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: devops
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./message.sql:/docker-entrypoint-initdb.d/message.sql  
+    networks:
+      - twotier
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  flask-app:
+    image: trainwithshubham/two-tier-flask-app:latest
+    container_name: flask-app
+    ports:
+      - "5000:5000"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DB: devops
+    depends_on:
+      - mysql
+    networks:
+      - twotier
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  twotier:
