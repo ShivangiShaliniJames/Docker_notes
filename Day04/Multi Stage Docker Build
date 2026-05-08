@@ -1,0 +1,14 @@
+Multi stage docker build allows dividing building  of your image into stages
+
+
+
+Commands:
+
+
+ubuntu@ip-172-31-87-248:~projects/flask-app-ecs$docker build -t flask-app-ecs .        #builds image for the app. but the image size is really big. 
+So we use the concept of multi stage build.
+
+We make changes in the Dockerfile, check images. After this
+
+ubuntu@ip-172-31-87-248:~projects/flask-app-ecs$docker build -t flask-app-ecs-mini .   #building one stage with big image and another stage with mini/smaller image
+ubuntu@ip-172-31-87-248:~projects/flask-app-ecs$docker images                          # check size of flask-app-ecs-mini image
