@@ -1,0 +1,87 @@
+Docker Networking allows containers to communicate with each other, the host machine, and the outside world. 
+When you install Docker, it automatically creates three default networks: Bridge, Host, and None. (There is a category User defined Bridge (Custom))
+Another one is MACVLAN (docker swarm), IPVLAN, Overlay
+
+Some commands to view and create a docker network
+ubuntu@ip-172-31-87-248:~$docker network ls      #to view networks
+ubuntu@ip-172-31-87-248:~$docker network create mynetwork -d bridge    #making our own network 'mynetwork' of type bridge
+ubuntu@ip-172-31-87-248:~$docker network ls      #to check the created network
+
+Use two-tier-flask app project/repo 
+
+ubuntu@ip-172-31-87-248:~$cd projects
+ubuntu@ip-172-31-87-248:~projects$ git clone two-tier-flask-app.git
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$cd app.py      #read the file to create dockerfile for environment variables
+
+#packages that need to be installed can be understood from developer, application code, README.md file etc
+
+Dockerfile:
+
+# Use an official Python runtime as the base image
+FROM python:3.9-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# install required packages for system
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y gcc default-libmysqlclient-dev pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the requirements file into the container
+COPY requirements.txt .
+
+# Install app dependencies
+RUN pip install mysqlclient
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY . .
+
+# Specify the command to run your application
+CMD ["python", "app.py"]
+
+To build the app:
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker build -t two-tier-backend .
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker ps      #check the image
+
+Check the app.py file to see the database environment variables as we need mysql image also in the container to run the application. 
+We already built the mysql image, so we have it in our images which we will use. Check the port number (5000 in our case, mentioned in last line in app.py file)
+
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker images      #check image for our app - two-tier-backend
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker run -d -p 5000:5000 -e MYSQL_HOST=my_sql-e MYSQL_USER=root 
+-e MYSQL_PASSWORD=root -e MYSQL_DB=devops two-tier-backend:latest
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker ps -a        #to see all docker images (exited images also)
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker logs         # we check logs with container id which we got using docker ps -a for our image two-tier-backend
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker run -d -p 5000:5000 -e MYSQL_HOST=funny_turing -e MYSQL_USER=root 
+-e MYSQL_PASSWORD=root -e MYSQL_DB=devops two-tier-backend:latest
+
+#We are not able to find the image two-tier-backend as it is not there in the network. So lets build a docker network
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker ps              # Stop and remove the conainer id of mysql
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker stop <container_id_for_mysql> && docker rm <container_id_for_mysql>
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker network create two_tier -d bridge      #creates a bridge network with name two_tier
+
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker run -d --name mysql --network two-tier -e MY_SQL_ROOT_PASSWORD=root MY_SQL_DATABASE=devops mysql            #this will create mysql database image in our network and
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker run -d -p 5000:5000 --network two-tier -e MYSQL_HOST=mysql -e MYSQL_USER=root 
+-e MYSQL_PASSWORD=root -e MYSQL_DB=devops two-tier-backend:latest      #this will create image for two-tier in the network
+
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker ps      #check images for both 
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker network ls    #check the networks
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker network inspect two_tier    #check the network
+
+Now add 5000 port in security group for the ec2 instance to check the application running
+
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker exec -itd bash     #to check what is going on in mysql container
+bash-5.1#mysql -u root -p
+Enter password: root
+
+mysql>use devops;
+mysql>select * from messages;            #this will show all the data entered in the browser 
+
+
+
+
+
+
+
