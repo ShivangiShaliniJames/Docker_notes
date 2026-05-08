@@ -1,0 +1,27 @@
+A Docker Registry is a stateless, highly scalable server-side application that stores and lets you distribute Docker images. 
+It acts as a central repository where you push images after building them and pull them when deploying.
+
+Core Workflow 🔄
+Login: docker login <registry_url>
+Tag: docker tag <local_image> <registry_url>/<repo_name>:<tag>
+Push: docker push <registry_url>/<repo_name>:<tag>
+Pull: docker pull <registry_url>/<repo_name>:<tag>
+
+Running a Private Registry
+You can host a basic private registry locally with a single command:
+docker run -d -p 5000:5000 --name my-registry registry:2
+
+Commands:
+
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker system prune        #deletes all unused containers        
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker rmi <image_ids>     #deletes  image ids
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker images -aq           #lists ids of all images
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker rmi -f $(docker images -aq) # removes forcefully images of all stopped containers
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker compose down        #stops and removes containers
+
+ubuntu@ip-172-31-87-248:~projects/two-tier-flask-app$docker compose up -d --build      #restarts and builds again
+
+If building new docker images for registry, always use docker_username/docker_image_name
+
+Ctrl+c will gracefully shut down the container after docker compose up
+
