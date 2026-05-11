@@ -1,0 +1,28 @@
+Monitoring and logging Docker containers is essential for ensuring application health, troubleshooting, and resource management. 
+Effective strategies involve capturing standard output/error (stdout/stderr) from containers and feeding them into centralized systems, 
+combined with real-time resource monitoring.
+
+Comands:
+ubuntu@ip-172-31-87-248:~projects/flask-app-ecs$docker ps                                               #to check the relevant cotainer_id 
+ubuntu@ip-172-31-87-248:~projects/flask-app-ecs$nohup docker attach <container_id_for flask-app-ecs> &
+ubuntu@ip-172-31-87-248:~projects/flask-app-ecs$nohup: ignoring input and appending output to nohup.out      #all the activities on the browser will get added/stored in nohup.out file, collecting logs of container activities.
+
+Why docker containers are not individually used in production?
+In production, individual Docker containers are rarely used because they lack automation and resiliency. If a single container crashes, 
+it stays down unless a human manually restarts it.
+
+The Problem with Single Containers
+No Self-Healing: If the process fails, the container stops and your app goes offline.
+Manual Scaling: You can't easily add more "clones" to handle high traffic.
+Zero Downtime: Updating a single container requires stopping it, causing a service gap.
+Single Point of Failure: If the host machine dies, everything on it dies.
+
+Why Orchestrators (Kubernetes/Swarm) are Used
+
+Production environments use "orchestrators" to manage groups of containers automatically:
+
+High Availability: They automatically restart failed containers on healthy servers.
+Load Balancing: They distribute incoming traffic across multiple container instances.
+Rolling Updates: They replace old containers with new ones one-by-one so the site never goes down.
+Declarative State: You tell the system "I want 5 copies running," and the system makes it happen.
+
