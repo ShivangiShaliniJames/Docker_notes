@@ -26,3 +26,8 @@ Load Balancing: They distribute incoming traffic across multiple container insta
 Rolling Updates: They replace old containers with new ones one-by-one so the site never goes down.
 Declarative State: You tell the system "I want 5 copies running," and the system makes it happen.
 
+The Exception
+You might run a single container in production only if:
+It's a tiny, non-critical internal tool.
+You are using a "Serverless" platform (like AWS Fargate or Google Cloud Run) where the provider acts as the orchestrator for you.
+
