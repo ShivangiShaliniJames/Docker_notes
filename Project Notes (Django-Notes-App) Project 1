@@ -57,7 +57,7 @@ CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
 #RUN python manage.py migrate
 #RUN python manage.py makemigrations
 
-Docker Compose file
+Docker Compose file (Line 88 also means that you do not need to put ip-address:8000, the line will automatically redirect (our url http://ip-address/) internally to the django application and python manage.py migrate means to manage the django application, it needs to migrate whenever connected to database, this command helps create rows and columns in the db table and no input meand need not take any input/output from user.
 
 version: "3.8"
 
@@ -67,55 +67,76 @@ services:                #We need to make containers for Django, mysql and nginx
                          # Dockerfile of Nginx - FROM nginx:1.23.3-alpine         this means the base image to be built from
                          #                       COPY ./default.conf /etc/nginx/conf.d/default.conf          this means to copy config file kept /etc/nginx/conf.d/default.conf (in the container) to ./default.conf which is our default.config file in nginx folder 
 
-    build: ./nginx
+    build: ./nginx       #build means build nginx from dockerfile kept in the nginx folder
     image: nginx
-    container_name: "nginx_cont"
+    container_name: "nginx_cont"        #container name
     ports:
-      - "80:80"
-    restart: always
+      - "80:80"                        #nginx runs on port 80
+    restart: always                    #make sure nginx always restart if stopped
     depends_on:
-      - django_app
+      - django_app                    ##depends on django
     networks:
       - notes-app-nw
 
   django_app:
     build:
-      context: .
+      context: .                    #image will be build from current which is .
     image: django_app
-    container_name: "django_cont"
+    container_name: "django_cont"  #mentioned django_container name in default.config file in nginx
     ports:
-      - "8000:8000"
-    command: sh -c "python manage.py migrate --noinput && gunicorn notesapp.wsgi --bind 0.0.0.0:8000"
+      - "8000:8000"                #port is 8000 mentioned in default.config file in nginx
+    command: sh -c "python manage.py migrate --noinput && gunicorn notesapp.wsgi --bind 0.0.0.0:8000"                #check wsgi file in notesapp folder, using shell command, gunicorn serves your application in production, we have'nt mentioned RUN commands in Dockerfile in our application (last two lines), bind command allows the application to run on local host
     env_file:
-      - ".env"
+      - ".env"                    #.env has all the environment variables
     depends_on:
-      - db
-    restart: always
+      - db                        #depends on mysql
+    restart: always               #make sure django always restart if stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/admin || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/admin || exit 1"]            #make sure that health of django app is met
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
     networks:
-      - notes-app-nw
+      - notes-app-nw            # #network is notes-app-nw
 
   db:
-    image: mysql
+    image: mysql                    #there is no dockerfile from which mysql will be built, so build from image mysql
     container_name: "db_cont"
     environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=test_db
+      - MYSQL_ROOT_PASSWORD=root      #mysql root password, check the .env file
+      - MYSQL_DATABASE=test_db        #mysql database, check the .env file
     volumes:
       - ./data/mysql/db:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]        #to make sure that db should run with multiple interval and timeout and retries
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 60s
     networks:
-      - notes-app-nw
+      - notes-app-nw                #network is notes-app-nw
 
 networks:
-  notes-app-nw:
+  notes-app-nw:                    #declare network is notes-app-nw
+
+Notes: Make changes in nginx/default.conf file, it is djangocont and not djangoapp
+Also docker compose up --build, it will build and then run the application, run the container
+docker compose up -d (keep the application running in background)
+
+Added inbound rule in my ec2 instance - 
+
+Field	        Value
+Type	        Custom TCP
+Port Range	    8000
+Source	        Anywhere IPv4
+
+The Django application was running correctly inside the container on port 8000, but the application was inaccessible externally 
+because the EC2 security group and/or Docker port mapping did not expose port 8000 to the browser.
+
+Successfully built the application.
+
+Deployed a containerized Django Notes Application on AWS EC2 using Docker and Docker Compose. Configured Linux-based EC2 instances, 
+managed Docker containers, mapped application ports, and updated AWS Security Group inbound rules to enable external browser access. 
+Gained hands-on experience in Linux administration, containerization, networking, and cloud deployment troubleshooting.
+
