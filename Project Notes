@@ -1,0 +1,121 @@
+Reverse proxy server
+
+A reverse proxy acts as a "middleman" between the internet and your backend servers. When a user visits your site, they talk to the proxy,
+and the proxy talks to your application.
+
+How It Works
+Request: User sends a request to example.com.
+Intercept: The reverse proxy (e.g., Nginx) receives the request.
+Forward: The proxy passes the request to the correct internal container.
+Respond: The proxy sends the app's response back to the user.
+
+Why Use One?
+Security: Hides your backend server's IP and protects against direct attacks.
+SSL Termination: One place to manage HTTPS certificates instead of in every app.
+Load Balancing: Spreads traffic across multiple instances of your container.
+Caching: Stores static files to serve them faster and reduce server load.
+URL Masking: Makes localhost:8080 look like a clean ://example.com URL.
+
+Example Architecture
+In a Docker setup, you typically have:
+External Network: Only the Reverse Proxy is exposed to the internet.
+Internal Network: Your Database, API, and Frontend talk to each other privately.
+
+mynotes is the front-end, build is already built, all css and front-end files are built. Check them if you want to, otherwise not needed.
+notesapp is the backend written in django, explore the settings.py file which contains the apps' configuration. Check templates section 
+where it is mentioned [BASE_DIR / 'mynotes/build'] which means it has already imported html/css files from build under mynotes, so basically 
+front-end is already built, so it has imported from that folder - /mynotes/build. Under databases, it retrieves all the db related env variables.
+(.env file which has all the required environment variables required for database mysql))
+
+Now check default.conf file under nginx - On this server, on port 80: it will do reverse proxy to http://django_cont:8000 anywhere on 
+'ip-address/' means on our browser, when we set our ip address from our ec2 instance - 13.218.160.251/80/, it will re-direct to the django 
+container address - http://django_cont:8000
+
+api - folder has all the code
+
+Dockerfile            #The Dockerfile copies the application on our work directory and import the libraries
+
+FROM python:3.9
+
+WORKDIR /app/backend
+
+COPY requirements.txt /app/backend            #copies requirements.txt to location /app/backend which is the working directory 
+RUN apt-get update \                          # will update and upgrade 
+    && apt-get upgrade -y \
+    && apt-get install -y gcc default-libmysqlclient-dev pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# Install app dependencies
+RUN pip install mysqlclient
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . /app/backend
+
+EXPOSE 8000                              #expose it on port 8000
+CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
+#RUN python manage.py migrate
+#RUN python manage.py makemigrations
+
+Docker Compose file
+
+version: "3.8"
+
+services:                #We need to make containers for Django, mysql and nginx
+  nginx:                 #Search nginx default config file on google, go to beginners link, search for proxy pass which will give code to be written
+                         #config file in nginx/default.config. In that file, nginx server will listen at port 80. There is a line in 
+                         # Dockerfile of Nginx - FROM nginx:1.23.3-alpine         this means the base image to be built from
+                         #                       COPY ./default.conf /etc/nginx/conf.d/default.conf          this means to copy config file kept /etc/nginx/conf.d/default.conf (in the container) to ./default.conf which is our default.config file in nginx folder 
+
+    build: ./nginx
+    image: nginx
+    container_name: "nginx_cont"
+    ports:
+      - "80:80"
+    restart: always
+    depends_on:
+      - django_app
+    networks:
+      - notes-app-nw
+
+  django_app:
+    build:
+      context: .
+    image: django_app
+    container_name: "django_cont"
+    ports:
+      - "8000:8000"
+    command: sh -c "python manage.py migrate --noinput && gunicorn notesapp.wsgi --bind 0.0.0.0:8000"
+    env_file:
+      - ".env"
+    depends_on:
+      - db
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/admin || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - notes-app-nw
+
+  db:
+    image: mysql
+    container_name: "db_cont"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=test_db
+    volumes:
+      - ./data/mysql/db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - notes-app-nw
+
+networks:
+  notes-app-nw:
