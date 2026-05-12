@@ -1,0 +1,90 @@
+Expense Tracker App (Java)
+
+Dockerfile
+
+#———stage1 - jar builder ————-
+
+# Maven image
+
+FROM maven:3.8.3-openjdk-17 AS builder         #in the pom.xml file, you will get the maven version, search on google maven version closely compatible for springboot application 
+
+# Set working directory
+
+WORKDIR /app
+
+# Copy source code from local to container
+
+COPY . /app
+
+# Build application and skip test cases
+
+#EXPOSE 8080
+
+RUN mvn clean install -DskipTests=true          #search maven install build jar on google, in the README.md file under Getting started - Build and Run: Build the project using your preferred IDE or with Maven: mvn clean install. For tests, checksrc/test, no tests are written so we need to skip them
+
+#ENTRYPOINT ["java", "-jar", "/expenseapp.jar"]
+
+#--------------------------------------
+# Stage 2 - app build                      #multi stage build used to minimise the image size, hence using alpine image in the second stage once completed all the libraries installation with command mvn clean install 
+#--------------------------------------
+
+# Import small size java image
+
+FROM openjdk:17-alpine
+
+WORKDIR /app 
+
+# Copy build from stage 1 (builder)
+
+COPY --from=builder /app/target/*.jar /app/target/expenseapp.jar      #application name is expenseapp taken from application.properties file Expenses-Tracker-WebApp/src/main/resources/application.properties
+/application.properties
+
+# Expose application port 
+
+EXPOSE 8080
+
+# Start the application
+ENTRYPOINT ["java", "-jar", "/app/target/expenseapp.jar"]
+
+>Dockercompose file 
+
+version: "3.8"
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql            #use the container name from spring.datasource.url=jdbc:mysql://mysql:3306/expenses_tracker?useSSL=false&serverTimezone=UTC written in application.properties file, mysql:3306 is container_name:
+    environment:
+      MYSQL_ROOT_PASSWORD: Test@123      #use spring.datasource.password=Test@123 and spring.datasource.username=root
+      MYSQL_DATABASE: expenses_tracker   #expenses_tracker from spring.datasource.url=jdbc:mysql://mysql:3306/expenses_tracker?useSSL=false&serverTimezone=UTC written in application.properties file
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    networks:
+      - appbridge
+    healthcheck:
+      test: ["CMD","mysqladmin","ping","-h","localhost","-uroot","-pTest@123"]          #mysql takes time to start hence adding health check
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: always
+
+  mainapp:
+    image: snehcreate/expensetracker_v3
+    container_name: Expensetracker
+    environment:
+      SPRING_DATASOURCE_USERNAME: root                    #Write in capital and use _ instead of . Use the details from application.properties file Expenses-Tracker-WebApp/src/main/resources/application.properties
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/expenses_tracker?allowPublicKeyRetrieval=true&useSSL=false"        # From Google - You should add client option to your mysql-connector allowPublicKeyRetrieval=true to allow the client to automatically request the public key from the server. Note that allowPublicKeyRetrieval=True could allow a malicious proxy to perform a MITM attack to get the plaintext password, so it is False by default and must be explicitly enabled. 
+      SPRING_DATASOURCE_PASSWORD: Test@123
+    ports:
+      - "8080:8080"                                    #tomcat apache application runs on 8080, port number is also available in the README.md file under Access the port
+    networks:
+      - appbridge
+    depends_on:
+      - mysql
+    restart: always
+
+networks:
+  appbridge:
+
+volumes:
+  mysql-data:
