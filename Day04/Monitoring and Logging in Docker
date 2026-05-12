@@ -31,3 +31,43 @@ You might run a single container in production only if:
 It's a tiny, non-critical internal tool.
 You are using a "Serverless" platform (like AWS Fargate or Google Cloud Run) where the provider acts as the orchestrator for you.
 
+Docker Scout and Docker Init
+Docker Scout and Docker Init are two distinct tools provided by Docker designed to improve the development lifecycle by automating setup 
+and enhancing security. 
+
+E.g. docker scout quickview <image_name>
+
+Docker init streamlines the initial containerization of projects, while Docker Scout scans images for
+vulnerabilities and provides remediation recommendations.
+
+Docker init can be used to create Dockerfile, Docker-compose.yml and README.md file.
+
+Docker Init: Automating Project Setup
+
+docker init is a CLI tool that simplifies containerizing applications by automatically creating necessary Docker files 
+(Dockerfile, docker-compose.yml, .dockerignore) tailored to your project's language and framework.
+1. Functionality: It analyzes your project directory, detects the technology stack (e.g., Python, Node.js, Go, Rust, PHP, Java, .NET), 
+and generates best-practice configuration files.
+2. Workflow: Run docker init in your project folder, choose the template, and it generates the files, allowing you to quickly run 
+docker compose up.
+3. Benefits: Saves time, reduces human error, and helps beginners follow best practices for containerization.
+
+Docker Scout: Securing Container Images
+
+Docker Scout is a native image analysis and security tool that inspects container images to identify vulnerabilities, provides a Software 
+Bill of Materials (SBOM), and suggests updates to improve security posture.
+1. Vulnerability Detection: It scans image layers and packages against continuously updated CVE (Common Vulnerabilities and Exposures) 
+databases.
+2. Actionable Advice: Instead of just listing vulnerabilities, Scout offers recommendations for fixing them, such as suggesting a more 
+secure base image.
+3. Policy Evaluation: It can check if images meet specific security standards, providing alerts when policies are violated.
+4. Integration: Integrates into the development workflow through Docker Desktop, CLI, and CI/CD pipelines (GitHub Actions, GitLab, Jenkins).
+
+How They Work Together
+While docker init helps you get your application running in a container, Docker Scout ensures that the image you built is secure and 
+optimized before deployment.
+
+1. Initial Build: You use docker init to create a Dockerfile.
+2. Security Scan: You use docker build to create the image, then docker scout cves <image> to check it.
+3. Recommendation: If vulnerabilities are found in the base image, you can check docker scout recommendations to find a better alternative.
+
